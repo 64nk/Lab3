@@ -3,12 +3,12 @@ import java.io.*;
 import java.net.*;
 
 public class EchoClient {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
 
         if (args.length != 2) {
             System.err.println(
                     "Usage: java EchoClient <host name> <port number>");
-            System.exit(1);
+            return;
         }
 
         String hostName = args[0];
@@ -25,7 +25,40 @@ public class EchoClient {
                         new BufferedReader(
                                 new InputStreamReader(System.in))
         ) {
-            String userInput;
+            Thread receive = new Thread(() -> {
+                String msg;
+                try {
+                    while ((msg = in.readLine()) != null) {
+                        System.out.println("Server: " + msg);
+                    }
+                } catch (IOException e) {
+                    System.out.println("Server disconnected.");
+                }
+            });
+
+            Thread send = new Thread(() -> {
+                String msg;
+                try {
+                    while ((msg = stdIn.readLine()) != null) {
+                        out.println(msg);
+                    }
+                } catch (IOException e) {
+                    System.out.println("Error sending message.");
+                }
+            });
+
+            receive.start();
+            send.start();
+
+            receive.join();
+            send.join();
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+
+
+            /*String userInput;
             while ((userInput = stdIn.readLine()) != null) {
                 out.println(userInput);
                 System.out.println("echo: " + in.readLine());
@@ -37,6 +70,6 @@ public class EchoClient {
             System.err.println("Couldn't get I/O for the connection to " +
                     hostName);
             System.exit(1);
-        }
+        }*/
     }
 }
